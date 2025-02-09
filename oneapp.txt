@@ -1,0 +1,107 @@
+import streamlit as st
+import pandas as pd
+import pickle
+
+
+# col1, col2, col3 = st.columns([0.2, 1, 0.2])
+
+# # # Center the image in the middle column with a specified width
+# with col2:
+#      st.image("logo.png", use_container_width=True)
+
+
+st.header("Employee Churn Prediction Batch-78")
+
+# Sidebar for app selection
+# st.sidebar.title("Select One")
+# app_selection = st.sidebar.selectbox("Select App", ["Single Prediction", "Prediction Using Test File"])
+app_selection = st.selectbox("Select App", ["Single Prediction", "Prediction Using Test File"])
+
+# Load the pre-trained model
+with open('pipeline.pkl', 'rb') as f:
+    pipeline = pickle.load(f)
+
+# st.image("logo.png", use_container_width=True)  
+# Create three columns for layout
+# col1, col2, col3 = st.columns([0.2, 5, 0.2])
+
+# Center the image in the middle column with a size of 1x1
+
+
+if app_selection == "Single Prediction":
+    # Function to show prediction result
+    def show_prediction(satisfaction_level, last_evaluation, number_project, average_monthly_hours,
+                       time_spent_company, work_accident, promotion_last_5years, department, salary):
+        sample = pd.DataFrame({
+            'satisfaction_level': [satisfaction_level],
+            'last_evaluation': [last_evaluation],
+            'number_project': [number_project],
+            'average_montly_hours': [average_monthly_hours],
+            'time_spend_company': [time_spent_company],
+            'Work_accident': [work_accident],
+            'promotion_last_5years': [promotion_last_5years],
+            'departments': [department],
+            'salary': [salary]
+        })
+
+        result = pipeline.predict(sample)
+
+        if result[0] == 1:
+            st.write("An employee may leave the organization.")
+        else:
+            st.write("An employee may stay with the organization.")
+
+    # Streamlit app for single prediction
+    
+
+    # Employee data input fields
+    satisfaction_level = st.number_input("Employee Satisfaction Level", min_value=0.0, max_value=1.0, step=0.01)
+    last_evaluation = st.number_input("Last Evaluation Score", min_value=0.0, max_value=1.0, step=0.01)
+    number_project = st.number_input("Number of Projects Assigned", min_value=1, step=1)
+    average_monthly_hours = st.number_input("Average Monthly Hours Worked", min_value=1, step=1)
+    time_spent_company = st.number_input("Time Spent at the Company (Years)", min_value=1, step=1)
+    work_accident = st.radio("Work Accident (1=Yes, 0=No)", [0, 1])
+    promotion_last_5years = st.radio("Promotion in Last 5 Years (1=Yes, 0=No)", [0, 1])
+    department = st.selectbox("Department Name", ['sales', 'technical', 'support', 'IT', 'product_mng', 'marketing', 'RandD', 'accounting', 'hr', 'management'])
+    salary = st.selectbox("Salary Category", ['low', 'medium', 'high'])
+
+    # Predict button
+    if st.button("Predict"):
+        show_prediction(satisfaction_level, last_evaluation, number_project, average_monthly_hours,
+                        time_spent_company, work_accident, promotion_last_5years, department, salary)
+
+else:
+    # Function to process data
+    def process_data(data):
+        result = pipeline.predict(data)
+        y_pred = ["An employee may leave the organization." if pred == 1 
+                  else "An employee may stay with the organization." for pred in result]
+        data['Predicted_target'] = y_pred
+        return data
+
+    # Streamlit app for prediction using test file
+    
+
+    # Button to upload CSV file
+    uploaded_file = st.file_uploader("Choose a CSV file", type=["csv"])
+
+    if uploaded_file is not None:
+        try:
+            # Load data from CSV
+            data = pd.read_csv(uploaded_file)
+            data.columns = data.columns.str.replace('\n', '')
+            data.rename(columns={'Departments ': 'departments'}, inplace=True)
+            data = data.drop_duplicates()
+
+            # Process the data
+            processed_data = process_data(data)
+
+            # Display processed data
+            st.write("Processed Data:")
+            st.write(processed_data)
+
+            # Save the processed data to a CSV file
+            processed_data.to_csv('processed_data.csv', index=False)
+            st.success("Data saved successfully as 'processed_data.csv'!")
+        except Exception as e:
+            st.error(f"Failed to process the file: {e}")
