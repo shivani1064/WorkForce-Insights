@@ -42,7 +42,7 @@ def save_file(data):
     )
 
 # Streamlit UI for file upload
-st.title("Employee Churn Prediction")
+st.title("WorkForce")
 st.subheader("Upload CSV File")
 
 uploaded_file = st.file_uploader("Choose a CSV file", type="csv")

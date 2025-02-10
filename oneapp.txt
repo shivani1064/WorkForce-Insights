@@ -10,7 +10,7 @@ import pickle
 #      st.image("logo.png", use_container_width=True)
 
 
-st.header("Employee Churn Prediction Batch-78")
+st.header("WorlForce-Insights Batch-78")
 
 # Sidebar for app selection
 # st.sidebar.title("Select One")
